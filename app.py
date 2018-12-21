@@ -49,7 +49,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Queue youtube songs from slack channels")
     parser.add_argument("--token", required=True, dest="oath_access_token", help="Bot User OAuth Access Token")
-    parser.add_argument("--cast", dest="chromecast_name", help="Bot User OAuth Access Token")
+    parser.add_argument("--cast", dest="chromecast_name", help="Name of specific chromecast")
     kwargs = vars(parser.parse_args())
     try:
         main(**kwargs)
