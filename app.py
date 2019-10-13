@@ -1,5 +1,7 @@
 import re
 import time
+import sys
+import logging
 
 import pychromecast
 import pychromecast.controllers.youtube as youtube
@@ -9,13 +11,19 @@ from slackclient import SlackClient
 YOUTUBE_VIDEO_ID_RE = re.compile(r"(?:(?<=(?:v|V)/)|(?<=be/)|(?<=(?:\?|\&)v=)|(?<=embed/))([\w-]+)")
 
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+
 def find_chromecasts(names=None, cast_type=None):
     ccs = pychromecast.get_chromecasts()
     if names:
         ccs = filter(lambda cc: cc.name in names, ccs)
     if cast_type:
         ccs = filter(lambda cc: cc.cast_type == cast_type, ccs)
-    return list(ccs)
+    ccs = list(ccs)
+    logger.info('Found %d chromecasts', len(ccs))
+    return ccs
 
 
 def get_youtube_chromecast(name=None):
@@ -26,14 +34,14 @@ def get_youtube_chromecast(name=None):
 
 
 def handle_video_id(chromecast, video_id):
-    print("Handle", video_id)
+    logger.info('Adding video ID %s', video_id)
     chromecast.youtube_controller.add_to_queue(video_id)
     chromecast.media_controller.play()
 
 
 def main(oath_access_token, chromecast_name=None):
     chromecast = get_youtube_chromecast(chromecast_name)
-    print("Found", chromecast)
+    logger.info('Using chromecast %s', chromecast)
     slack_client = SlackClient(oath_access_token)
     assert slack_client.api_call("auth.test").get("ok") is True
     assert slack_client.rtm_connect(with_team_state=False)
@@ -46,6 +54,7 @@ def main(oath_access_token, chromecast_name=None):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(stream=sys.stderr)
     import argparse
     parser = argparse.ArgumentParser(description="Queue youtube songs from slack channels")
     parser.add_argument("--token", required=True, dest="oath_access_token", help="Bot User OAuth Access Token")
